@@ -58,6 +58,7 @@ export const login = async (req, res) => {
 
     // 3. Si todo está bien, creamos un Token nuevo para esta sesión
     const token = await createAccessToken({ id: userFound._id });
+    console.log(token);
 
     // 4. envío el token como cookie al cliente
     // las cookies permiten almacenar datos en el navegador del usuario, como tokens de sesión
@@ -75,12 +76,21 @@ export const login = async (req, res) => {
   }
 };
 
+// Esta función limpia la cookie del navegador para cerrar la sesión
+export const logout = (req, res) => {
+  // Seteamos la cookie 'token' con un valor vacío y que expire YA (en 0)
+  res.cookie("token", "", {
+    expires: new Date(0),
+  });
+  return res.sendStatus(200); // Enviamos un "OK" al frontend
+};
 
 // mejorar esta función, solo la puse de prueba para verificar si funciona authRequired
 export const profile = async (req, res) => {
   // Buscamos al usuario en la DB usando el ID que el middleware guardó en req.user
   const userFound = await User.findById(req.user.id);
-  if (!userFound) return res.status(400).json({ message: "Usuario no encontrado" });
+  if (!userFound)
+    return res.status(400).json({ message: "Usuario no encontrado" });
 
   return res.json({
     id: userFound._id,
