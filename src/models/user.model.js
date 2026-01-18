@@ -3,29 +3,36 @@ import mongoose from "mongoose";
 
 // Defino el esquema (schema) del usuario - es como una plantilla que define la estructura
 // Este esquema le dice a MongoDB qué campos debe tener cada documento de usuario
-const userSchema = new mongoose.Schema({
-  // Campo username: nombre de usuario
-  username: {
-    type: String, // El tipo de dato es texto (String)
-    required: true, // Es obligatorio - no puedo crear un usuario sin username
-    trim: true, // Elimina espacios en blanco al inicio y final (ej: " pablo " → "pablo")
+const userSchema = new mongoose.Schema(
+  {
+    // Campo username: nombre de usuario
+    username: {
+      type: String, // El tipo de dato es texto (String)
+      required: true, // Es obligatorio - no puedo crear un usuario sin username
+      trim: true, // Elimina espacios en blanco al inicio y final (ej: " pablo " → "pablo")
+    },
+    // Campo email: correo electrónico del usuario
+    email: {
+      type: String, // El tipo de dato es texto
+      required: true, // Es obligatorio - no puedo crear un usuario sin email
+      trim: true, // Elimina espacios en blanco
+      unique: true, // No pueden haber dos usuarios con el mismo email (MongoDB valida esto)
+    },
+    // Campo password: contraseña del usuario
+    password: {
+      type: String, // El tipo de dato es texto
+      required: true, // Es obligatorio - no puedo crear un usuario sin password
+    },
+    role: {
+      type: String,
+      enum: ["user", "admin"], // Solo permite estos dos valores
+      default: "user", // Por defecto todos son usuarios comunes
+    },
   },
-  // Campo email: correo electrónico del usuario
-  email: {
-    type: String, // El tipo de dato es texto
-    required: true, // Es obligatorio - no puedo crear un usuario sin email
-    trim: true, // Elimina espacios en blanco
-    unique: true, // No pueden haber dos usuarios con el mismo email (MongoDB valida esto)
-  },
-  // Campo password: contraseña del usuario
-  password: {
-    type: String, // El tipo de dato es texto
-    required: true, // Es obligatorio - no puedo crear un usuario sin password
-  },
-}, 
-{
-  timestamps: true
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Exporto el modelo "User" basado en el esquema userSchema
 // El primer parámetro "user" es el nombre del modelo (MongoDB creará una colección llamada "users")
