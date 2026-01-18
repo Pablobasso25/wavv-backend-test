@@ -22,6 +22,7 @@ export const registerSchema = z.object({
     .min(6, {
       message: "La contraseña debe tener al menos 6 caracteres",
     }),
+  role: z.string().optional(), //  Permitimos que el campo role sea opcional
 });
 
 export const loginSchema = z.object({

@@ -2,7 +2,7 @@ import Song from "../models/song.model.js";
 
 export const getSongs = async (req, res) => {
   try {
-    const songs = await Song.find().populate("user");
+    const songs = await Song.find().populate("user", "username");
     res.json(songs);
   } catch (error) {
     return res.status(500).json({ message: "Error al obtener canciones" });
@@ -11,18 +11,19 @@ export const getSongs = async (req, res) => {
 
 export const createSong = async (req, res) => {
   try {
-    const { title, artist, image, youtubeUrl } = req.body;
+    const { title, artist, image, youtubeUrl, duration } = req.body;
     const newSong = new Song({
       title,
       artist,
       image,
       youtubeUrl,
-      user: req.user.id, // El ID viene del middleware de autenticación
+      duration,
+      user: req.user.id, // El ID lo saca del token validado
     });
     const savedSong = await newSong.save();
-    res.json(savedSong);
+    res.status(201).json(savedSong);
   } catch (error) {
-    return res.status(500).json({ message: "Error al crear la canción" });
+    return res.status(500).json({ message: "Error al guardar la canción" });
   }
 };
 

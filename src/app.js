@@ -13,7 +13,7 @@ app.use(express.json()); //Para que el servidor entienda los datos JSON que mand
 app.use(cookieParser()); // Le digo a Express que ahora puede entender las cookies que vienen del navegador
 app.use(
   cors({
-    origin: "http://localhost:5173", // La URL del frontend de React
+    origin: ["http://localhost:5173", "http://localhost:5174"], // La URL del frontend de React
     credentials: true, // Para que permita el envío de cookies
   }),
 );

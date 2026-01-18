@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 export const register = async (req, res) => {
   // el request body (son los datos que el usuario envia y esta en formato JSON => clave, valor)
   // extraigo los datos que necesite de req.body (que es un objeto)
-  const { email, password, username } = req.body;
+  const { email, password, username, role } = req.body;
   console.log(req.body); // borar este console log, este me sirve para ver los datos en consola
 
   try {
@@ -17,15 +17,24 @@ export const register = async (req, res) => {
       username,
       email,
       password: passwordHash,
+      role: role || "user", // Si viene un rol lo usa, sino usa "user"
     });
 
     // 3. Guarda en la base de datos
     const userSaved = await newUser.save();
 
     // 4. Crea el token con el ID del usuario guardado (como payload se pasa el ID )
-    const token = await createAccessToken({ id: userSaved._id });
+    const token = await createAccessToken({
+      id: userSaved._id,
+      role: userSaved.role,
+    });
     // 5. Guarda el token en una cookie (navegador)
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: false, // Cambiamos a false para que js-cookie la vea
+      secure: false, // false porque estamos en localhost (http)
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 día
+    });
     // 6. Si todo sale bien y guardo el usuario, responde al frontend con los datos del usuario (sin la contraseña)
     res.json({
       id: userSaved._id,
@@ -57,19 +66,27 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Contraseña incorrecta" });
 
     // 3. Si todo está bien, creamos un Token nuevo para esta sesión
-    const token = await createAccessToken({ id: userFound._id });
-    console.log(token);
+    const token = await createAccessToken({
+      id: userFound._id,
+      role: userFound.role,
+    });
 
     // 4. envío el token como cookie al cliente
     // las cookies permiten almacenar datos en el navegador del usuario, como tokens de sesión
     // sirven para mantener la autenticación sin necesidad de enviar el token en cada petición manualmente
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: false, // Cambiamos a false para que js-cookie la vea
+      secure: false, // false porque estamos en localhost (http)
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 día
+    });
 
     // 5. Respondemos con los datos básicos para que el Front los use
     res.json({
       id: userFound._id,
       username: userFound.username,
       email: userFound.email,
+      role: userFound.role,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
