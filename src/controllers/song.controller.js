@@ -1,5 +1,33 @@
 import Song from "../models/song.model.js";
 
+export const getSongs = async (req, res) => {
+  try {
+    const songs = await Song.find().populate("user");
+    res.json(songs);
+  } catch (error) {
+    return res.status(500).json({ message: "Error al obtener canciones" });
+  }
+};
+
+export const createSong = async (req, res) => {
+  try {
+    const { title, artist, image, youtubeUrl } = req.body;
+    const newSong = new Song({
+      title,
+      artist,
+      image,
+      youtubeUrl,
+      user: req.user.id, // El ID viene del middleware de autenticación
+    });
+    const savedSong = await newSong.save();
+    res.json(savedSong);
+  } catch (error) {
+    return res.status(500).json({ message: "Error al crear la canción" });
+  }
+};
+
+/* import Song from "../models/song.model.js";
+
 // Crear una canción
 export const createSong = async (req, res) => {
   try {
@@ -40,4 +68,4 @@ export const getSong = async (req, res) => {
   } catch (error) {
     return res.status(404).json({ message: "ID no válido" });
   }
-};
+}; */
