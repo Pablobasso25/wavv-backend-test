@@ -27,46 +27,43 @@ export const createSong = async (req, res) => {
   }
 };
 
-/* import Song from "../models/song.model.js";
+export const searchExternalSongs = async (req, res) => {
+  const { search } = req.query;
 
-// Crear una canción
-export const createSong = async (req, res) => {
-  try {
-    const { title, artist, image, youtubeUrl, duration } = req.body;
-
-    const newSong = new Song({
-      title,
-      artist,
-      image,
-      youtubeUrl,
-      duration,
-      user: req.user.id, // Viene del middleware authRequired
+  if (!search) {
+    return res.status(400).json({
+      message: "Se requiere un término de búsqueda",
     });
+  }
 
-    const savedSong = await newSong.save();
-    res.json(savedSong);
+  try {
+    const response = await fetch(
+      `https://itunes.apple.com/search?term=${encodeURIComponent(search)}&entity=song&limit=15`,
+    );
+
+    const data = await response.json();
+
+    if (data.resultCount === 0) {
+      return res.status(404).json({ message: "No se encontraron canciones" });
+    }
+
+    // Propiedades del objeto
+    const results = data.results.map((track) => ({
+      id: track.trackId,
+      title: track.trackName,
+      artist: track.artistName,
+      album: track.collectionName,
+      image: track.artworkUrl100.replace("100x100", "600x600"),
+      audio: track.previewUrl,
+      duration_ms: track.trackTimeMillis,
+    }));
+
+    res.json(results);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Error searching in iTunes:", error);
+
+    res.status(500).json({
+      message: "Error interno al buscar canciones en el servidor externo",
+    });
   }
 };
-
-// traer todas las canciones (La biblioteca global)
-export const getSongs = async (req, res) => {
-  try {
-    const songs = await Song.find().populate("user", "username"); // Nos muestra quién la subió
-    res.json(songs);
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
-};
-
-// traer una sola canción
-export const getSong = async (req, res) => {
-  try {
-    const song = await Song.findById(req.params.id);
-    if (!song) return res.status(404).json({ message: "Canción no encontrada" });
-    res.json(song);
-  } catch (error) {
-    return res.status(404).json({ message: "ID no válido" });
-  }
-}; */
