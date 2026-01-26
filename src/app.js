@@ -2,8 +2,11 @@ import express from "express";
 import morgan from "morgan";
 import authRoutes from "./routes/auth.routes.js";
 import songRoutes from "./routes/song.routes.js";
+import playlistRoutes from "./routes/playlist.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+/* import payRoutes from "./routes/payments.routes.js" */
 //ejecuto e inicializo express el cual me devuelve un objeto que lo guardo en una variable
 // app es el servidor
 const app = express();
@@ -18,11 +21,15 @@ app.use(
   }),
 );
 app.use("/api", authRoutes); // Le decimos al servidor que use las rutas de autenticación con el prefijo /api
-// exporto app para poder usarlo en index.js
 app.use("/api", songRoutes);
+app.use("/api", playlistRoutes);
+app.use("/api", paymentRoutes);
+
+/* app.use("/pay", payRoutes) */
 
 // RUTA TEMPORAL, BORRARLA DESPUES DE PROBARLA
 app.get("/api/token", (req, res) => {
   res.json({ access_token: "mock_token", expires_in: 3600 });
 });
+// exporto app para poder usarlo en index.js
 export default app;

@@ -28,10 +28,14 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"], // Solo permite estos dos valores
       default: "user", // Por defecto todos son usuarios comunes
     },
+
+    subscription: {
+      status: { type: String, enum: ["free", "premium"], default: "free" },
+      mp_preference_id: { type: String }, // Para rastrear el pago en Mercado Pago
+      startDate: { type: Date },
+    },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true },
 );
 
 // Exporto el modelo "User" basado en el esquema userSchema
