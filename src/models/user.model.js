@@ -33,7 +33,10 @@ const userSchema = new mongoose.Schema(
       status: { type: String, enum: ["free", "premium"], default: "free" },
       mp_preference_id: { type: String }, // Para rastrear el pago en Mercado Pago
       startDate: { type: Date },
+      skipsToday: { type: Number, default: 0 }, // Para limitar los saltos en plan Free
+      lastSkipDate: { type: Date, default: Date.now }
     },
+    active: { type: Boolean, default: true }, // Para la baja lógica
   },
   { timestamps: true },
 );

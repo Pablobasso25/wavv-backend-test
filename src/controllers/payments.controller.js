@@ -1,40 +1,42 @@
 import { MercadoPagoConfig, Preference } from 'mercadopago';
+import User from '../models/user.model.js';
 
-// Configuramos el cliente con el Token del .env
+// Configuramos las credenciales
 const client = new MercadoPagoConfig({ 
   accessToken: process.env.MP_ACCESS_TOKEN 
 });
 
 export const createPreference = async (req, res) => {
   try {
-    const { title, price, quantity } = req.body;
+    const { planType, price } = req.body;
+    const userId = req.user.id; // Viene del middleware authRequired
+
     const preference = new Preference(client);
 
     const result = await preference.create({
       body: {
         items: [
           {
-            title: title,
+            title: `Wavv Music Plan ${planType}`,
+            quantity: 1,
             unit_price: Number(price),
-            quantity: Number(quantity),
             currency_id: 'ARS',
           }
         ],
-        // Estas URLs son a donde vuelve el usuario después de pagar en MP
+        // Guardamos el ID del usuario para saber a quién activar luego
+        external_reference: userId, 
         back_urls: {
-          success: "http://localhost:5173/", 
-          failure: "http://localhost:5173/subscriptions",
-          pending: "http://localhost:5173/",
+          success: "http://localhost:5173/profile?payment=success",
+          failure: "http://localhost:5173/subscription?payment=error",
+          pending: "http://localhost:5173/subscription?payment=pending",
         },
         auto_return: "approved",
       }
     });
 
-    // Devolvemos el link (init_point)
-    res.json({ init_point: result.init_point });
-    
+    res.json({ id: result.id, init_point: result.init_point });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Error al generar el pago" });
+    res.status(500).json({ message: "Error al crear la preferencia de pago" });
   }
 };

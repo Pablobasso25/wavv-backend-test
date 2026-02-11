@@ -7,6 +7,6 @@ export const validateSchema = (schema) => (req, res, next) => {
     next();
   } catch (error) {
     // Si Zod encuentra errores, los atrapa aquí
-    return res.status(400).json(error.issues.map((error) => error.message));
+    return res.status(400).json(error.errors.map((error) => error.message));
   }
 };

@@ -44,7 +44,10 @@ export const register = async (req, res) => {
       updatedAt: userSaved.updatedAt,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    if (error.code === 11000) {
+      return res.status(400).json(["El email ya está registrado"]);
+    }
+    return res.status(500).json([error.message]);
   }
 };
 
@@ -58,6 +61,11 @@ export const login = async (req, res) => {
     const userFound = await User.findOne({ email });
     if (!userFound)
       return res.status(400).json({ message: "Usuario no encontrado" });
+    // VERIFICACIÓN DE BAJA LÓGICA
+    if (!userFound.active)
+      return res.status(403).json({
+        message: "Cuenta desactivada. Por favor, contáctanos para reactivarla.",
+      });
 
     // 2. Comparamos la contraseña que envió el usuario con la que está en la DB
     // bcrypt.compare devuelve true si coinciden
@@ -87,12 +95,34 @@ export const login = async (req, res) => {
       username: userFound.username,
       email: userFound.email,
       role: userFound.role,
+      // Usamos ?. para que si subscription es undefined, no rompa el código
+      subscription: userFound.subscription?.status || "free",
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+// NUEVA FUNCIÓN: BAJA LÓGICA (DELETE)
+export const deleteAccount = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { active: false },
+      { new: true },
+    );
+    if (!user)
+      return res.status(404).json({ message: "Usuario no encontrado" });
+
+    // AQUÍ VA LA LOGICA DE EL EMAIL DE "Vuelve pronto"
+    // await sendFarewellEmail(user.email);
+
+    res.cookie("token", "", { expires: new Date(0) });
+    res.json({ message: "Cuenta desactivada correctamente" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 // Esta función limpia la cookie del navegador para cerrar la sesión
 export const logout = (req, res) => {
   // Seteamos la cookie 'token' con un valor vacío y que expire YA (en 0)
