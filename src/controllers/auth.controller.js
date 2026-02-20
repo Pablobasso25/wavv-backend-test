@@ -1,47 +1,51 @@
 import { createAccessToken } from "../libs/jwt.js";
 import User from "../models/user.model.js";
+import { sendEmail } from "./email.controller.js";
 import bcrypt from "bcryptjs";
 
 export const register = async (req, res) => {
-  // el request body (son los datos que el usuario envia y esta en formato JSON => clave, valor)
-  // extraigo los datos que necesite de req.body (que es un objeto)
   const { email, password, username, role } = req.body;
-  console.log(req.body); // borar este console log, este me sirve para ver los datos en consola
-
   try {
-    // 1. Encripta la contraseña
+    
+    if (role === "admin") {
+      const adminExists = await User.findOne({ role: "admin" });
+      if (adminExists) {
+        return res.status(400).json(["Ya existe un administrador en el sistema"]);
+      }
+    }
+    
     const passwordHash = await bcrypt.hash(password, 10);
-
-    // 2. Crea el nuevo usuario con la contraseña encriptada
     const newUser = new User({
       username,
       email,
       password: passwordHash,
-      role: role || "user", // Si viene un rol lo usa, sino usa "user"
+      role: role || "user",
     });
-
-    // 3. Guarda en la base de datos
     const userSaved = await newUser.save();
-
-    // 4. Crea el token con el ID del usuario guardado (como payload se pasa el ID )
+    sendEmail({
+      to_name: userSaved.username,
+      to_email: userSaved.email,
+      asunto_dinamico: "¡Bienvenido a Wavv Music!",
+      cuerpo_mensaje: `Gracias por unirte a Wavv Music. Ahora puedes disfrutar de miles de canciones. ¡Comienza a escuchar!`,
+    }).catch(() => {});
     const token = await createAccessToken({
       id: userSaved._id,
       role: userSaved.role,
     });
-    // 5. Guarda el token en una cookie (navegador)
     res.cookie("token", token, {
-      httpOnly: false, // Cambiamos a false para que js-cookie la vea
-      secure: false, // false porque estamos en localhost (http)
+      httpOnly: false,
+      secure: false,
       sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 1 día
+      maxAge: 24 * 60 * 60 * 1000,
     });
-    // 6. Si todo sale bien y guardo el usuario, responde al frontend con los datos del usuario (sin la contraseña)
     res.json({
       id: userSaved._id,
       username: userSaved.username,
       email: userSaved.email,
+      subscription: userSaved.subscription,
       createdAt: userSaved.createdAt,
       updatedAt: userSaved.updatedAt,
+      role: userSaved.role,
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -50,98 +54,42 @@ export const register = async (req, res) => {
     return res.status(500).json([error.message]);
   }
 };
-
 export const login = async (req, res) => {
-  // el request body (son los datos que el usuario envia y esta en formato JSON => clave, valor)
-  // extraigo los datos que necesite de req.body (que es un objeto)
   const { email, password } = req.body;
-
   try {
-    // 1. Buscamos si el usuario existe por su email usando el Modelo (user.model.js)
     const userFound = await User.findOne({ email });
     if (!userFound)
-      return res.status(400).json({ message: "Usuario no encontrado" });
-    // VERIFICACIÓN DE BAJA LÓGICA
-    if (!userFound.active)
-      return res.status(403).json({
-        message: "Cuenta desactivada. Por favor, contáctanos para reactivarla.",
-      });
-
-    // 2. Comparamos la contraseña que envió el usuario con la que está en la DB
-    // bcrypt.compare devuelve true si coinciden
+      return res.status(400).json({ message: "Ususario no encontrado" });
+     if (userFound.isActive === false) {
+      return res.status(403).json({ message: "Usuario dado de baja. Contacta al administrador." });
+    }
     const isMatch = await bcrypt.compare(password, userFound.password);
     if (!isMatch)
       return res.status(400).json({ message: "Contraseña incorrecta" });
-
-    // 3. Si todo está bien, creamos un Token nuevo para esta sesión
     const token = await createAccessToken({
       id: userFound._id,
       role: userFound.role,
     });
-
-    // 4. envío el token como cookie al cliente
-    // las cookies permiten almacenar datos en el navegador del usuario, como tokens de sesión
-    // sirven para mantener la autenticación sin necesidad de enviar el token en cada petición manualmente
     res.cookie("token", token, {
-      httpOnly: false, // Cambiamos a false para que js-cookie la vea
-      secure: false, // false porque estamos en localhost (http)
+      httpOnly: false,
+      secure: false,
       sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 1 día
+      maxAge: 24 * 60 * 60 * 1000,
     });
-
-    // 5. Respondemos con los datos básicos para que el Front los use
     res.json({
-      id: userFound._id,
+      id: userFound.id,
       username: userFound.username,
       email: userFound.email,
+      subscription: userFound.subscription,
       role: userFound.role,
-      // Usamos ?. para que si subscription es undefined, no rompa el código
-      subscription: userFound.subscription?.status || "free",
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
-// NUEVA FUNCIÓN: BAJA LÓGICA (DELETE)
-export const deleteAccount = async (req, res) => {
-  try {
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { active: false },
-      { new: true },
-    );
-    if (!user)
-      return res.status(404).json({ message: "Usuario no encontrado" });
-
-    // AQUÍ VA LA LOGICA DE EL EMAIL DE "Vuelve pronto"
-    // await sendFarewellEmail(user.email);
-
-    res.cookie("token", "", { expires: new Date(0) });
-    res.json({ message: "Cuenta desactivada correctamente" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-// Esta función limpia la cookie del navegador para cerrar la sesión
 export const logout = (req, res) => {
-  // Seteamos la cookie 'token' con un valor vacío y que expire YA (en 0)
   res.cookie("token", "", {
     expires: new Date(0),
   });
-  return res.sendStatus(200); // Enviamos un "OK" al frontend
-};
-
-// mejorar esta función, solo la puse de prueba para verificar si funciona authRequired
-export const profile = async (req, res) => {
-  // Buscamos al usuario en la DB usando el ID que el middleware guardó en req.user
-  const userFound = await User.findById(req.user.id);
-  if (!userFound)
-    return res.status(400).json({ message: "Usuario no encontrado" });
-
-  return res.json({
-    id: userFound._id,
-    username: userFound.username,
-    email: userFound.email,
-  });
+  return res.sendStatus(200);
 };

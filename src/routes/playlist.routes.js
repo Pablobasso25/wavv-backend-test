@@ -1,18 +1,20 @@
 import { Router } from "express";
 import { authRequired } from "../middlewares/validateToken.js";
-import { addSongToPlaylist } from "../controllers/playlist.controller.js";
+import {
+  addSongToPlaylist,
+  removeSongFromPlaylist,
+  getUserPlaylist,
+} from "../controllers/playlist.controller.js";
 import { validateSchema } from "../middlewares/validator.middleware.js";
 import { addSongSchema } from "../schemas/playlist.schema.js";
 
 const router = Router();
-
-// 1. authRequired (¿está logueado?)
-// 2. validateSchema (¿los datos son correctos?)
 router.post(
   "/playlist/add",
   authRequired,
-  validateSchema(addSongSchema),
+  // validateSchema(addSongSchema), // Temporalmente deshabilitado
   addSongToPlaylist,
 );
-
+router.get("/playlist", authRequired, getUserPlaylist);
+router.delete("/playlist/:songId", authRequired, removeSongFromPlaylist);
 export default router;

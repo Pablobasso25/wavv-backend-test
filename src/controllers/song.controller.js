@@ -18,12 +18,12 @@ export const createSong = async (req, res) => {
       image,
       youtubeUrl,
       duration,
-      user: req.user.id, // El ID lo saca del token validado
+      user: req.user.id,
     });
     const savedSong = await newSong.save();
     res.status(201).json(savedSong);
   } catch (error) {
-    return res.status(500).json({ message: "Error al guardar la canción" });
+    return res.status(500).json({ message: "Error al guardar la cancion" });
   }
 };
 
@@ -31,9 +31,9 @@ export const searchExternalSongs = async (req, res) => {
   const { search } = req.query;
 
   if (!search) {
-    return res.status(400).json({
-      message: "Se requiere un término de búsqueda",
-    });
+    return res
+      .status(400)
+      .json({ message: "Se requiere un término de búsqueda" });
   }
 
   try {
@@ -47,7 +47,6 @@ export const searchExternalSongs = async (req, res) => {
       return res.status(404).json({ message: "No se encontraron canciones" });
     }
 
-    // Propiedades del objeto
     const results = data.results.map((track) => ({
       id: track.trackId,
       title: track.trackName,
@@ -60,10 +59,51 @@ export const searchExternalSongs = async (req, res) => {
 
     res.json(results);
   } catch (error) {
-    console.error("Error searching in iTunes:", error);
+    console.error("Error de búsqueda en iTunes:", error);
 
     res.status(500).json({
       message: "Error interno al buscar canciones en el servidor externo",
     });
+  }
+};
+
+export const deleteSong = async (req, res) => {
+  try {
+    const song = await Song.findByIdAndDelete(req.params.id);
+    if (!song) {
+      return res.status(404).json({ message: "Canción no encontrada" });
+    }
+    res.json({ message: "Canción eliminada correctamente" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al eliminar canción" });
+  }
+};
+
+export const setTrendingSong = async (req, res) => {
+  try {
+    await Song.updateMany({}, { isTrending: false });
+    
+    const song = await Song.findByIdAndUpdate(
+      req.params.id,
+      { isTrending: true },
+      { new: true }
+    );
+    
+    if (!song) {
+      return res.status(404).json({ message: "Canción no encontrada" });
+    }
+    
+    res.json({ message: "Canción marcada como trending", song });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al marcar trending" });
+  }
+};
+
+export const getTrendingSong = async (req, res) => {
+  try {
+    const song = await Song.findOne({ isTrending: true });
+    res.json(song);
+  } catch (error) {
+    return res.status(500).json({ message: "Error al obtener trending" });
   }
 };

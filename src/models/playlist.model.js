@@ -4,14 +4,14 @@ const playlistSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Referencia al modelo de Usuario
+      ref: "User", 
       required: true,
       unique: true, 
     },
     songs: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Song", // Referencia al modelo de Canción
+        ref: "Song", 
       },
     ],
   },

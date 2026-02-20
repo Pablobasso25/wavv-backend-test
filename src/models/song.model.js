@@ -4,10 +4,10 @@ const songSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     artist: { type: String, required: true },
-    image: { type: String }, // aca se pega el link de la foto de Spotify
-    youtubeUrl: { type: String, required: true }, // El link de YouTube para el audio
+    image: { type: String }, 
+    youtubeUrl: { type: String, required: true }, 
     duration: { type: String },
-    // Este campo es para saber qué Admin subió la canción
+    isTrending: { type: Boolean, default: false },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

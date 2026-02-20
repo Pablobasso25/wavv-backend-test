@@ -1,48 +1,46 @@
-// Importo mongoose para poder crear esquemas y modelos
 import mongoose from "mongoose";
 
-// Defino el esquema (schema) del usuario - es como una plantilla que define la estructura
-// Este esquema le dice a MongoDB qué campos debe tener cada documento de usuario
 const userSchema = new mongoose.Schema(
   {
-    // Campo username: nombre de usuario
     username: {
-      type: String, // El tipo de dato es texto (String)
-      required: true, // Es obligatorio - no puedo crear un usuario sin username
-      trim: true, // Elimina espacios en blanco al inicio y final (ej: " pablo " → "pablo")
+      type: String,
+      required: true,
+      trim: true,
     },
-    // Campo email: correo electrónico del usuario
     email: {
-      type: String, // El tipo de dato es texto
-      required: true, // Es obligatorio - no puedo crear un usuario sin email
-      trim: true, // Elimina espacios en blanco
-      unique: true, // No pueden haber dos usuarios con el mismo email (MongoDB valida esto)
+      type: String,
+      required: true,
+      trim: true,
+      unique: true,
     },
-    // Campo password: contraseña del usuario
     password: {
-      type: String, // El tipo de dato es texto
-      required: true, // Es obligatorio - no puedo crear un usuario sin password
+      type: String,
+      required: true,
     },
     role: {
       type: String,
-      enum: ["user", "admin"], // Solo permite estos dos valores
-      default: "user", // Por defecto todos son usuarios comunes
+      enum: ["user", "admin"],
+      default: "user",
     },
-
     subscription: {
-      status: { type: String, enum: ["free", "premium"], default: "free" },
-      mp_preference_id: { type: String }, // Para rastrear el pago en Mercado Pago
+      status: { type: String, enum: ["free", "premium", "admin"], default: "free" },
+      mp_preference_id: { type: String },
       startDate: { type: Date },
-      skipsToday: { type: Number, default: 0 }, // Para limitar los saltos en plan Free
-      lastSkipDate: { type: Date, default: Date.now }
+      endDate: { type: Date },
+      warningEmailSent: { type: Boolean, default: false },
     },
-    active: { type: Boolean, default: true }, // Para la baja lógica
+    bio: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    avatar: {
+      type: String,
+      default: "",
+    },
+    isActive: { type: Boolean, default: true }
   },
   { timestamps: true },
 );
 
-// Exporto el modelo "User" basado en el esquema userSchema
-// El primer parámetro "user" es el nombre del modelo (MongoDB creará una colección llamada "users")
-// El segundo parámetro es el esquema que definí arriba
-// Este modelo lo importaré en los controllers para hacer operaciones CRUD (crear, leer, actualizar, eliminar)
 export default mongoose.model("User", userSchema);

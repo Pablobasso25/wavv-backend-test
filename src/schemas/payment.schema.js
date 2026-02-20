@@ -1,13 +1,14 @@
 import { z } from "zod";
 
 export const createPreferenceSchema = z.object({
-  title: z.string({
-    required_error: "El título del producto es requerido",
+  planType: z.enum(["Premium", "Familiar"], {
+    required_error: "El tipo de plan es obligatorio",
+    invalid_type_error: "El plan debe ser Premium o Familiar",
   }),
   price: z
-    .number({
-      required_error: "El precio debe ser un número",
-    })
-    .positive("El precio debe ser mayor a 0"),
-  quantity: z.number().int().default(1),
+    .union([z.string(), z.number()])
+    .transform((val) => Number(val))
+    .refine((val) => !isNaN(val) && val >= 6000, {
+      message: "El precio debe ser un número mayor o igual a $6000",
+    }),
 });
