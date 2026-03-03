@@ -8,18 +8,23 @@ import playlistRoutes from "./routes/playlist.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import albumRoutes from "./routes/album.routes.js";
+import { TOKEN_SECRET } from "./config.js"
 
 const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [
+      "http://localhost:5173", 
+      "http://localhost:5174", 
+      process.env.FRONTEND_URL
+    ],
     credentials: true,
   }),
 );
 app.use(morgan("dev"));
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser(TOKEN_SECRET));
 
 app.use("/api", authRoutes);
 app.use("/api", songRoutes);
