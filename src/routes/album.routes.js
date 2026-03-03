@@ -1,11 +1,27 @@
-import { Router } from "express";
-import { getAlbums, createAlbum, deleteAlbum } from "../controllers/album.controller.js";
-import { authRequired } from "../middlewares/validateToken.js";
-import { isAdmin } from "../middlewares/isAdmin.js";
+import mongoose from "mongoose";
 
-const router = Router();
-router.get("/albums", authRequired, getAlbums);
-router.post("/albums", [authRequired, isAdmin], createAlbum);
-router.delete("/albums/:id", [authRequired, isAdmin], deleteAlbum);
+const albumSchema = new mongoose.Schema(
+  {
+    collectionId: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    artistName: { type: String, required: true },
+    image: { type: String },
+    tracks: [
+      {
+        trackId: { type: String },
+        name: { type: String },
+        duration_ms: { type: Number },
+        preview_url: { type: String },
+        cover: { type: String },
+      },
+    ],
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-export default router;
+export default mongoose.model("Album", albumSchema);
